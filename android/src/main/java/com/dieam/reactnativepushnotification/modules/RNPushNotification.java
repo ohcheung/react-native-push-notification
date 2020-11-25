@@ -33,12 +33,6 @@ import java.util.Map;
 
 import android.util.Log;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
-import com.google.firebase.messaging.FirebaseMessaging;
-
 public class RNPushNotification extends ReactContextBaseJavaModule implements ActivityEventListener {
     public static final String LOG_TAG = "RNPushNotification";// all logging should use this tag
 
@@ -105,43 +99,6 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
         }
 
         mRNPushNotificationHelper.invokeApp(bundle);
-    }
-
-    @ReactMethod
-    public void checkPermissions(Promise promise) {
-        ReactContext reactContext = getReactApplicationContext();
-        NotificationManagerCompat managerCompat = NotificationManagerCompat.from(reactContext);
-        promise.resolve(managerCompat.areNotificationsEnabled());
-    }
-
-    @ReactMethod
-    public void requestPermissions() {
-      final RNPushNotificationJsDelivery fMjsDelivery = mJsDelivery;
-      
-      FirebaseInstanceId.getInstance().getInstanceId()
-              .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                  @Override
-                  public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                      if (!task.isSuccessful()) {
-                          Log.e(LOG_TAG, "exception", task.getException());
-                          return;
-                      }
-
-                      WritableMap params = Arguments.createMap();
-                      params.putString("deviceToken", task.getResult().getToken());
-                      fMjsDelivery.sendEvent("remoteNotificationsRegistered", params);
-                  }
-              });
-    }
-
-    @ReactMethod
-    public void subscribeToTopic(String topic) {
-        FirebaseMessaging.getInstance().subscribeToTopic(topic);
-    }
-    
-    @ReactMethod
-    public void unsubscribeFromTopic(String topic) {
-        FirebaseMessaging.getInstance().unsubscribeFromTopic(topic);
     }
 
     @ReactMethod
@@ -254,24 +211,6 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
      */
     public void removeDeliveredNotifications(ReadableArray identifiers) {
       mRNPushNotificationHelper.clearDeliveredNotifications(identifiers);
-    }
-
-    @ReactMethod
-    /**
-     * Unregister for all remote notifications received
-     */
-    public void abandonPermissions() {
-      new Thread(new Runnable() {
-          @Override
-          public void run() {
-              try {
-                  FirebaseInstanceId.getInstance().deleteInstanceId();
-                  Log.i(LOG_TAG, "InstanceID deleted");
-              } catch (IOException e) {
-                  Log.e(LOG_TAG, "exception", e);
-              }
-          }
-      }).start();
     }
 
     @ReactMethod
